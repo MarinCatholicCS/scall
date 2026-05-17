@@ -1,7 +1,7 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { classifyEmail } from "../lib/classify";
-import { triggerCall } from "../lib/agentphone";
-import { sendConfirmation } from "../lib/agentmail";
+import { NextResponse, type NextRequest } from "next/server";
+import { classifyEmail } from "@/lib/classify";
+import { triggerCall } from "@/lib/agentphone";
+import { sendConfirmation } from "@/lib/agentmail";
 
 interface AgentMailMessage {
   message_id: string;
@@ -23,21 +23,18 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+export const dynamic = "force-dynamic";
 
-  const payload = req.body as AgentMailWebhookPayload;
+export async function POST(req: NextRequest) {
+  const payload = (await req.json().catch(() => null)) as AgentMailWebhookPayload | null;
 
   if (payload?.event_type !== "message.received") {
-    return res.status(200).json({ skipped: "irrelevant_event" });
+    return NextResponse.json({ skipped: "irrelevant_event" }, { status: 200 });
   }
 
   const message = payload?.message;
-
   if (!message) {
-    return res.status(200).json({ skipped: "missing_message" });
+    return NextResponse.json({ skipped: "missing_message" }, { status: 200 });
   }
 
   const fromRaw = Array.isArray(message.from_) ? message.from_[0] : message.from_;
@@ -48,12 +45,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Loop protection: ignore emails from our own domain or our own confirmation emails
   if (from.includes("agentmail.to") || subject.includes("[Scall]")) {
-    return res.status(200).json({ skipped: "loop_guard" });
+    return NextResponse.json({ skipped: "loop_guard" }, { status: 200 });
   }
   const body = message.text ?? (message.html ? stripHtml(message.html) : "");
 
   if (!subject && !body) {
-    return res.status(200).json({ skipped: "empty_email" });
+    return NextResponse.json({ skipped: "empty_email" }, { status: 200 });
   }
 
   let result;
@@ -62,11 +59,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (err) {
     console.error("Classification error:", err);
     // Return 200 so AgentMail doesn't retry and double-call the scammer
-    return res.status(200).json({ error: "Classification failed" });
+    return NextResponse.json({ error: "Classification failed" }, { status: 200 });
   }
 
   if (!result.is_scam || !result.phone_number) {
-    return res.status(200).json({ skipped: "not_scam_or_no_phone" });
+    return NextResponse.json({ skipped: "not_scam_or_no_phone" }, { status: 200 });
   }
 
   const [callResult, emailResult] = await Promise.allSettled([
@@ -81,5 +78,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error("AgentMail error:", emailResult.reason);
   }
 
-  return res.status(200).json({ success: true });
+  return NextResponse.json({ success: true }, { status: 200 });
 }

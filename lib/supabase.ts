@@ -43,6 +43,37 @@ export async function insertScamCall(row: ScamCallRow): Promise<void> {
   console.log(`[supabase] inserted row into ${table}`);
 }
 
+export interface ScamCallStats {
+  count: number;
+  total_seconds: number;
+  total_money: number;
+}
+
+export async function selectScamCallStats(): Promise<ScamCallStats> {
+  const baseUrl = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const table = process.env.SUPABASE_TABLE ?? "scam_calls";
+
+  if (!baseUrl || !key) {
+    throw new Error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set");
+  }
+
+  // Pull only the two numeric fields we need to aggregate.
+  // 10k cap is far above any expected volume but cheap; revisit if needed.
+  const url = `${baseUrl.replace(/\/$/, "")}/rest/v1/${table}?select=duration_seconds,money_amount&limit=10000`;
+  const r = await fetch(url, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+  });
+  if (!r.ok) {
+    const text = await r.text().catch(() => "");
+    throw new Error(`Supabase ${r.status}: ${text.slice(0, 300)}`);
+  }
+  const rows = (await r.json()) as Array<{ duration_seconds: number | null; money_amount: number | null }>;
+  const total_seconds = rows.reduce((s, x) => s + (x.duration_seconds ?? 0), 0);
+  const total_money = rows.reduce((s, x) => s + (x.money_amount ?? 0), 0);
+  return { count: rows.length, total_seconds, total_money };
+}
+
 export async function selectScamCalls(limit = 50): Promise<ScamCallRow[]> {
   const baseUrl = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

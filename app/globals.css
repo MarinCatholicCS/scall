@@ -1,0 +1,27 @@
+:root {
+  --yellow: #FFD600;
+  --yellow-dim: #C9A800;
+  --yellow-faint: #6B5800;
+  --orange: #FF8C00;
+  --orange-dim: #B26100;
+  --bg: #000;
+  --bg-card: #0A0A0A;
+  --bg-card-hover: #161105;
+  --border: rgba(255, 214, 0, 0.35);
+  --border-strong: #FFD600;
+  --text: #F2C300;
+  --text-bright: #FFD600;
+  --text-mute: #7a6500;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  font-feature-settings: "calt" 0;
+}
+
+a { color: inherit; text-decoration: none; }
