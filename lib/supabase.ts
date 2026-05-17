@@ -42,3 +42,28 @@ export async function insertScamCall(row: ScamCallRow): Promise<void> {
 
   console.log(`[supabase] inserted row into ${table}`);
 }
+
+export async function selectScamCalls(limit = 50): Promise<ScamCallRow[]> {
+  const baseUrl = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const table = process.env.SUPABASE_TABLE ?? "scam_calls";
+
+  if (!baseUrl || !key) {
+    throw new Error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set");
+  }
+
+  const url = `${baseUrl.replace(/\/$/, "")}/rest/v1/${table}?select=*&order=created_at.desc&limit=${limit}`;
+  const r = await fetch(url, {
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+    },
+  });
+
+  if (!r.ok) {
+    const text = await r.text().catch(() => "");
+    throw new Error(`Supabase ${r.status}: ${text.slice(0, 300)}`);
+  }
+
+  return (await r.json()) as ScamCallRow[];
+}
