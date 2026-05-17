@@ -70,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const [callResult, emailResult] = await Promise.allSettled([
-    triggerCall(result.phone_number, result.scam_type, result.reasoning),
+    triggerCall(result.phone_number),
     sendConfirmation(from, result.scam_type, result.phone_number),
   ]);
 
