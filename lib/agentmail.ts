@@ -14,7 +14,7 @@ export async function sendConfirmation(
       },
       body: JSON.stringify({
         to,
-        subject: "We're stalling your scammer",
+        subject: "[Scall] We're stalling your scammer",
         text: `Hi,
 
 We received the suspicious email you forwarded to us. Our system identified it as a "${scamType}" scam.
