@@ -14,7 +14,7 @@ Triggered by `lib/agentphone.ts` via `POST https://api.agentphone.ai/v1/calls` w
 
 ### Post-call event webhook
 
-After each call ends, AgentPhone fires `agent.call_ended` to our endpoint with the full transcript. We summarize it with Gemini and write a row to Supabase.
+After each call ends, AgentPhone fires `agent.call_ended` to our endpoint with the full transcript. We summarize it with OpenAI and write a row to Supabase.
 
 **Configured webhook URL:** `https://scall-seven.vercel.app/api/call-ended`
 
@@ -42,16 +42,16 @@ Receives forwarded scam emails from victims. Fires a `message.received` webhook 
 
 ---
 
-## Gemini — Classifier + Summarizer
+## OpenAI — Classifier + Summarizer
 
 Used in two places:
 
-- **`lib/classify.ts`** — given a forwarded email, returns `{is_scam, confidence, phone_number, scam_type, reasoning}`. JSON-schema mode for guaranteed-parseable output.
+- **`lib/classify.ts`** — given a forwarded email or user-typed scam report, returns `{is_scam, confidence, phone_number, scam_type, reasoning}`. Strict JSON schema mode for guaranteed-parseable output.
 - **`lib/summarize.ts`** — given a finished call transcript, returns `{impersonation_target, money_amount, money_amount_text, payment_method, notes}` for the Supabase row.
 
-Model priority (both files): `gemini-3.1-flash-lite-preview` → `gemini-2.5-flash` → `gemini-2.5-flash-lite`. Override per-file via `GEMINI_CLASSIFY_MODEL` / `GEMINI_SUMMARIZE_MODEL`.
+Default model for both: `gpt-4o-mini`. Override per-file via `OPENAI_CLASSIFY_MODEL` / `OPENAI_SUMMARIZE_MODEL`.
 
-**Required env var:** `GEMINI_API_KEY`.
+**Required env var:** `OPENAI_API_KEY`.
 
 ---
 

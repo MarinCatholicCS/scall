@@ -1,6 +1,8 @@
 // Post-call analysis. Reads a scam-call transcript and extracts structured
 // fields (impersonation target, money amount, payment method, notes) using
-// Gemini's JSON-schema mode.
+// OpenAI (gpt-4o-mini by default) with strict JSON schema mode.
+
+import OpenAI from "openai";
 
 export interface TranscriptTurn {
   role: string;
@@ -15,14 +17,7 @@ export interface SummaryResult {
   notes: string;
 }
 
-const GEMINI_MODELS = [
-  process.env.GEMINI_SUMMARIZE_MODEL,
-  "gemini-3.1-flash-lite-preview",
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-].filter(Boolean) as string[];
-
-const SUMMARIZE_TIMEOUT_MS = 15000;
+const MODEL = process.env.OPENAI_SUMMARIZE_MODEL ?? "gpt-4o-mini";
 
 const SYSTEM_PROMPT = `You analyze transcripts of scam phone calls. In each transcript, the "user" role is the scammer calling in; the "agent" role is OUR stalling AI that pretends to be a confused elderly person. Extract structured information about what the scammer was trying to do.
 
@@ -36,86 +31,58 @@ Return JSON with these fields:
 
 Only extract what the scammer (user role) actually said. Do NOT infer or invent details. Ignore anything the agent (our AI) said when extracting facts about the scam.`;
 
-const RESPONSE_SCHEMA = {
-  type: "OBJECT",
-  properties: {
-    impersonation_target: { type: "STRING" },
-    money_amount: { type: "NUMBER", nullable: true },
-    money_amount_text: { type: "STRING", nullable: true },
-    payment_method: { type: "STRING", nullable: true },
-    notes: { type: "STRING" },
-  },
-  required: ["impersonation_target", "money_amount", "money_amount_text", "payment_method", "notes"],
-};
-
 function formatTranscript(turns: TranscriptTurn[]): string {
   return turns
-    .map(t => `${t.role.toUpperCase()}: ${t.content}`)
+    .map((t) => `${t.role.toUpperCase()}: ${t.content}`)
     .join("\n");
 }
 
 export async function summarizeTranscript(
   transcript: TranscriptTurn[]
 ): Promise<SummaryResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY not set");
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY not set");
 
+  const client = new OpenAI({ apiKey });
   const userContent = `TRANSCRIPT:\n\n${formatTranscript(transcript)}`;
-  const reqBody = {
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [{ role: "user", parts: [{ text: userContent }] }],
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 600,
-      responseMimeType: "application/json",
-      responseSchema: RESPONSE_SCHEMA,
+
+  const response = await client.chat.completions.create({
+    model: MODEL,
+    temperature: 0.2,
+    max_tokens: 600,
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "scam_call_summary",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            impersonation_target: { type: "string" },
+            money_amount: { type: ["number", "null"] },
+            money_amount_text: { type: ["string", "null"] },
+            payment_method: { type: ["string", "null"] },
+            notes: { type: "string" },
+          },
+          required: [
+            "impersonation_target",
+            "money_amount",
+            "money_amount_text",
+            "payment_method",
+            "notes",
+          ],
+          additionalProperties: false,
+        },
+      },
     },
-  };
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: userContent },
+    ],
+  });
 
-  let lastError: Error | null = null;
-
-  for (const model of GEMINI_MODELS) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), SUMMARIZE_TIMEOUT_MS);
-
-    try {
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(reqBody),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-
-      if (r.status === 404 || r.status === 400) {
-        const errText = await r.text().catch(() => "");
-        console.warn(`[summarize] model ${model} unavailable (HTTP ${r.status}), trying next…`);
-        if (errText) console.warn("   detail:", errText.slice(0, 300));
-        lastError = new Error(`Gemini ${model} HTTP ${r.status}`);
-        continue;
-      }
-      if (!r.ok) {
-        const errText = await r.text().catch(() => "");
-        throw new Error(`Gemini ${model} HTTP ${r.status}: ${errText.slice(0, 300)}`);
-      }
-
-      const json = await r.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) {
-        throw new Error(`Gemini ${model} returned no text`);
-      }
-
-      const parsed = JSON.parse(text) as SummaryResult;
-      console.log(`[summarize] used model: ${model}`);
-      return parsed;
-    } catch (e) {
-      clearTimeout(timer);
-      const err = e as Error;
-      console.warn(`[summarize] ${model} error:`, err.message);
-      lastError = err;
-    }
-  }
-
-  throw lastError ?? new Error("All Gemini summarize models failed");
+  const text = response.choices[0]?.message?.content ?? "";
+  const parsed = JSON.parse(text) as SummaryResult;
+  console.log(`[summarize] used model: ${MODEL}`);
+  return parsed;
 }
