@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Script from "next/script";
+import TranscriptDemo from "./components/TranscriptDemo";
 import "./landing.css";
 
 interface Stats {
@@ -61,6 +62,7 @@ export default function HomePage() {
 
   return (
     <>
+      <section className="hero">
       <div className="container">
         <pre className="ascii-art">
 {` ██████╗  ██████╗ █████╗ ██╗     ██╗
@@ -109,6 +111,14 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      </section>
+
+      <section id="demo" className="demo-section">
+        <h2>// see SCALL in action</h2>
+        <p className="demo-sub">look at one of our personas, marge.</p>
+        <TranscriptDemo />
+      </section>
 
       <pre id="animation-output" aria-hidden />
 

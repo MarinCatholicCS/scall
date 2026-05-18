@@ -1,6 +1,8 @@
-html, body { overflow: hidden; height: 100%; }
+html { scroll-behavior: smooth; }
+body { /* layout moved into .hero so the page can scroll past the fold */ }
 
-body {
+.hero {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -14,6 +16,51 @@ body {
   z-index: 1;
   max-width: 800px;
   width: 100%;
+}
+
+/* ───────── demo section (below the fold) ───────── */
+.demo-section {
+  position: relative;
+  z-index: 2; /* sits above the fixed fire animation */
+  background: linear-gradient(180deg, transparent 0%, #000 12%, #000 100%);
+  padding: 4rem 1.5rem 6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.demo-section h2 {
+  color: var(--yellow);
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+.demo-section .demo-sub {
+  color: var(--text-mute, #7a6500);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--text-mute, #7a6500);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-decoration: none;
+  z-index: 3;
+  animation: scroll-bob 2.4s ease-in-out infinite;
+}
+.scroll-hint:hover { color: var(--yellow); }
+@keyframes scroll-bob {
+  0%, 100% { transform: translate(-50%, 0); opacity: 0.65; }
+  50%      { transform: translate(-50%, 4px); opacity: 1; }
 }
 
 .ascii-art {
