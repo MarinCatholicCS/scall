@@ -1,4 +1,4 @@
-# Scall
+# Scall (Stanley Ho and Nico Zametto)
 
 Scall stalls scam callers. Forward a suspicious email — or type a quick report — to `scall@agentmail.to` and we'll classify it, call the scammer's number with an AI agent that wastes their time, summarize the call after it ends, and write the results to a Supabase-backed dashboard.
 
