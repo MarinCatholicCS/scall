@@ -144,8 +144,8 @@ export default function AddressesPage() {
 
   return (
     <>
-      <div className="header">
-        <pre className="ascii-small">
+      <header className="dash-hero">
+        <pre className="dash-logo">
 {` ██████╗  ██████╗ █████╗ ██╗     ██╗
 ██╔════╝ ██╔════╝██╔══██╗██║     ██║
 ╚█████╗  ██║     ███████║██║     ██║
@@ -153,29 +153,13 @@ export default function AddressesPage() {
 ██████╔╝ ╚██████╗██║  ██║███████╗███████╗
 ╚═════╝   ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝`}
         </pre>
-        <pre
-          style={{
-            position: "absolute",
-            marginLeft: "17.5%",
-            top: 48,
-            color: "orange",
-            fontSize: 5,
-          }}
-        >
-{`
-                ▄▄ ▄▄                                            ▄▄ ▄▄
-       █▄       ██ ██                                            ██ ██
-      ▄██▄      ██ ██                     ▄                      ██ ██
- ▄██▀█ ██ ▄▀▀█▄ ██ ██   ▄██▀█ ▄███▀ ▄▀▀█▄ ███▄███▄   ▄███▀ ▄▀▀█▄ ██ ██ ▄██▀█
- ▀███▄ ██ ▄█▀██ ██ ██   ▀███▄ ██    ▄█▀██ ██ ██ ██   ██    ▄█▀██ ██ ██ ▀███▄
-█▄▄██▀▄██▄▀█▄██▄██▄██  █▄▄██▀▄▀███▄▄▀█▄██▄██ ██ ▀█  ▄▀███▄▄▀█▄██▄██▄███▄▄██▀
-`}
-        </pre>
-        <a href="/" className="back-link">← Back to home</a>
-      </div>
+        <h1 className="dash-title">// captured addresses</h1>
+        <p className="dash-tagline">real numbers from real scammers</p>
+        <a href="/" className="nav-link dash-back">← back to home</a>
+      </header>
 
       <div className="page-title">
-        <h1>// captured_addresses.db</h1>
+        <span className="page-title-spacer" aria-hidden />
         <span className="meta">{metaText}</span>
       </div>
 
