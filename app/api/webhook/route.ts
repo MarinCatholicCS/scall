@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { classifyEmail } from "@/lib/classify";
-import { triggerCall } from "@/lib/agentphone";
+import { triggerCall, isCallableNumber } from "@/lib/agentphone";
 import { sendConfirmation } from "@/lib/agentmail";
 
 interface AgentMailMessage {
@@ -64,6 +64,14 @@ export async function POST(req: NextRequest) {
 
   if (!result.is_scam || !result.phone_number) {
     return NextResponse.json({ skipped: "not_scam_or_no_phone" }, { status: 200 });
+  }
+
+  if (!isCallableNumber(result.phone_number)) {
+    console.warn("[webhook] rejected non-callable number:", result.phone_number);
+    return NextResponse.json(
+      { skipped: "non_callable_number", phone_number: result.phone_number },
+      { status: 200 }
+    );
   }
 
   const [callResult, emailResult] = await Promise.allSettled([

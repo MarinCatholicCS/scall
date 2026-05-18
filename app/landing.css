@@ -20,9 +20,11 @@ body {
   color: var(--yellow);
   font-size: clamp(0.4rem, 1.8vw, 0.8rem);
   line-height: 1;
-  margin-bottom: 2rem;
+  margin: 0 auto 2rem;
   overflow: hidden;
   white-space: pre;
+  display: inline-block;
+  text-align: left;
   background: linear-gradient(90deg, #FFD600 0%, #FF8C00 100%);
   -webkit-background-clip: text;
   background-clip: text;

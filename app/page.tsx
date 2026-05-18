@@ -67,13 +67,21 @@ export default function HomePage() {
 ██╔════╝ ██╔════╝██╔══██╗██║     ██║
 ╚█████╗  ██║     ███████║██║     ██║
  ╚═══██╗ ██║     ██╔══██║██║     ██║
-  ██████╔╝ ╚██████╗██║  ██║███████╗███████╗
-  ╚═════╝   ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝`}
+██████╔╝ ╚██████╗██║  ██║███████╗███████╗
+╚═════╝   ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝`}
         </pre>
 
         <h1 style={{ paddingBottom: 5, paddingTop: 5 }}>stall scam calls</h1>
 
-        <p style={{ color: "orange", paddingBottom: 10 }}>forward an email to scall@agentmail.to</p>
+        <p style={{ color: "orange", paddingBottom: 10 }}>
+          forward an email to{" "}
+          <a
+            href="mailto:scall@agentmail.to"
+            style={{ color: "orange", textDecoration: "underline" }}
+          >
+            scall@agentmail.to
+          </a>
+        </p>
         <p style={{ color: "orange" }}>or click the button below</p>
         <br />
 
