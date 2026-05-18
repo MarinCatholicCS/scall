@@ -74,7 +74,10 @@ export async function selectScamCallStats(): Promise<ScamCallStats> {
   return { count: rows.length, total_seconds, total_money };
 }
 
-export async function selectScamCalls(limit = 50): Promise<ScamCallRow[]> {
+export async function selectScamCalls(
+  limit = 50,
+  minDurationSeconds = 0
+): Promise<ScamCallRow[]> {
   const baseUrl = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const table = process.env.SUPABASE_TABLE ?? "scam_calls";
@@ -83,7 +86,12 @@ export async function selectScamCalls(limit = 50): Promise<ScamCallRow[]> {
     throw new Error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set");
   }
 
-  const url = `${baseUrl.replace(/\/$/, "")}/rest/v1/${table}?select=*&order=created_at.desc&limit=${limit}`;
+  // `gte` excludes nulls automatically (null comparisons are false in SQL),
+  // which is what we want for short / failed calls.
+  const durationFilter = minDurationSeconds > 0
+    ? `&duration_seconds=gte.${minDurationSeconds}`
+    : "";
+  const url = `${baseUrl.replace(/\/$/, "")}/rest/v1/${table}?select=*&order=created_at.desc&limit=${limit}${durationFilter}`;
   const r = await fetch(url, {
     headers: {
       apikey: key,

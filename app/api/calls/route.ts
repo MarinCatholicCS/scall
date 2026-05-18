@@ -8,7 +8,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const rows = await selectScamCalls(200);
+    // Hide low-value records: calls under 15s are usually misfires
+    // (declined, voicemail, immediate hangup) and crowd the dashboard.
+    const rows = await selectScamCalls(200, 15);
     return NextResponse.json(rows, {
       status: 200,
       headers: { "Cache-Control": "s-maxage=10, stale-while-revalidate=30" },
